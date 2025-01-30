@@ -12,15 +12,13 @@ start_time = None
 game_history = []
 REQUIRED_PCS = 2
 lock = threading.Lock()
-responses_sent = set()
 
 def reset_state():
     """Сбрасываем состояние через 10 секунд после первого ID"""
-    global pc_data, current_game_state, start_time, final_result, responses_sent
+    global pc_data, current_game_state, start_time, final_result
     time.sleep(5)
     with lock:
         pc_data.clear()
-        responses_sent.clear()
         current_game_state = "waiting"
         start_time = None
         final_result = None
@@ -65,14 +63,8 @@ def send_lobby_id():
 @app.route("/check_status", methods=["GET"])
 def check_status():
     """ПК проверяет статус"""
-    pc_name = request.args.get("pc")
     with lock:
-        if final_result is None:
-            return jsonify({"status": "pending"})
-        if pc_name in responses_sent:
-            return jsonify({"status": final_result})
-        responses_sent.add(pc_name)
-        return jsonify({"status": final_result})
+        return jsonify({"status": final_result if final_result else "pending"})
 
 @app.route("/game_history", methods=["GET"])
 def get_game_history():
